@@ -1,0 +1,58 @@
+{
+  "summary": {
+    "start_date": "2026-05-01",
+    "end_date": "2026-05-10",
+    "trading_days": 3,
+    "funds_scored": 192,
+    "total_signals_generated": 576
+  },
+  "performance": {
+    "total_return_pct": 0.0,
+    "benchmark_return_pct": 0.0,
+    "max_drawdown_pct": 0,
+    "final_value": 1000000
+  },
+  "signal_distribution": {
+    "A": 0,
+    "B": 576,
+    "C": 0,
+    "D": 0,
+    "S": 0
+  },
+  "factor_contributions": {
+    "momentum": 1.4,
+    "quality": 39.6,
+    "sentiment": 0.0,
+    "trend": 58.9,
+    "valuation": 0.2
+  },
+  "monthly_returns": [
+    {
+      "month": "2026-05",
+      "return_pct": 0.0
+    }
+  ],
+  "daily_values": [
+    {
+      "date": "2026-05-06",
+      "portfolio_value": 1000000,
+      "cash": 1000000,
+      "positions": 0,
+      "signals": 192
+    },
+    {
+      "date": "2026-05-07",
+      "portfolio_value": 1000000,
+      "cash": 1000000,
+      "positions": 0,
+      "signals": 192
+    },
+    {
+      "date": "2026-05-08",
+      "portfolio_value": 1000000,
+      "cash": 1000000,
+      "positions": 0,
+      "signals": 192
+    }
+  ]
+}

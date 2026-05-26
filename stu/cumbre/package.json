@@ -1,0 +1,13 @@
+{
+  "name": "cumbre",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"cd backend && python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload\" \"npm run dev -w client\"",
+    "dev:backend": "cd backend && python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload",
+    "dev:client": "npm run dev -w client"
+  },
+  "workspaces": ["client"],
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
