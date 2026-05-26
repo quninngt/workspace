@@ -239,40 +239,42 @@ export default function ManualFollow() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setShowPositionDetail(false)}>
           <div className="bg-white rounded-xl p-6 w-full max-w-3xl mx-4 shadow-xl max-h-[80vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-4">持仓概览</h3>
-            <table className="w-full">
-              <thead>
-                <tr className="border-b text-left text-sm text-gray-500">
-                  <th className="px-4 py-3 font-medium">基金</th>
-                  <th className="px-4 py-3 font-medium">份额</th>
-                  <th className="px-4 py-3 font-medium">成本净值</th>
-                  <th className="px-4 py-3 font-medium">最新净值</th>
-                  <th className="px-4 py-3 font-medium">市值</th>
-                  <th className="px-4 py-3 font-medium">盈亏</th>
-                </tr>
-              </thead>
-              <tbody>
-                {portfolioSummary.positions?.map((pos: any) => (
-                  <tr key={pos.fund_code} className="border-b last:border-0">
-                    <td className="px-4 py-3 text-sm">
-                      <span className="font-mono text-primary-600">{pos.fund_code}</span>
-                      {fundNames[pos.fund_code] && <div className="text-xs text-gray-400">{fundNames[pos.fund_code]}</div>}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{pos.shares.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{pos.cost_nav.toFixed(4)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{pos.current_nav.toFixed(4)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700">¥{pos.market_value.toLocaleString()}</td>
-                    <td className="px-4 py-3 text-sm">
-                      <div className={pos.profit_loss >= 0 ? 'text-green-600' : 'text-red-600'}>
-                        {pos.profit_loss >= 0 ? '+' : ''}¥{pos.profit_loss.toLocaleString()}
-                      </div>
-                      <div className={`text-xs ${pos.profit_loss_ratio >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                        {pos.profit_loss_ratio >= 0 ? '+' : ''}{pos.profit_loss_ratio}%
-                      </div>
-                    </td>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr className="border-b text-left text-sm text-gray-500">
+                    <th className="px-4 py-3 font-medium">基金</th>
+                    <th className="px-4 py-3 font-medium">份额</th>
+                    <th className="px-4 py-3 font-medium">成本净值</th>
+                    <th className="px-4 py-3 font-medium">最新净值</th>
+                    <th className="px-4 py-3 font-medium">市值</th>
+                    <th className="px-4 py-3 font-medium">盈亏</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {portfolioSummary.positions?.map((pos: any) => (
+                    <tr key={pos.fund_code} className="border-b last:border-0">
+                      <td className="px-4 py-3 text-sm">
+                        <span className="font-mono text-primary-600">{pos.fund_code}</span>
+                        {fundNames[pos.fund_code] && <div className="text-xs text-gray-400">{fundNames[pos.fund_code]}</div>}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">{pos.shares.toFixed(2)}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{pos.cost_nav.toFixed(4)}</td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{pos.current_nav.toFixed(4)}</td>
+                      <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">¥{pos.market_value.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-sm whitespace-nowrap">
+                        <div className={pos.profit_loss >= 0 ? 'text-green-600' : 'text-red-600'}>
+                          {pos.profit_loss >= 0 ? '+' : ''}¥{pos.profit_loss.toLocaleString()}
+                        </div>
+                        <div className={`text-xs ${pos.profit_loss_ratio >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          {pos.profit_loss_ratio >= 0 ? '+' : ''}{pos.profit_loss_ratio}%
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <div className="flex justify-end mt-4">
               <button onClick={() => setShowPositionDetail(false)} className="btn-primary">关闭</button>
             </div>
@@ -404,26 +406,27 @@ export default function ManualFollow() {
         ) : items.length === 0 ? (
           <p className="text-gray-400 text-center py-12">暂无执行项目</p>
         ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b bg-gray-50 text-left text-sm text-gray-500">
-                <th className="px-4 py-3 w-10">
-                  <input
-                    type="checkbox"
-                    checked={items.length > 0 && selectedIds.size === items.length}
-                    onChange={toggleSelectAll}
-                    className="rounded border-gray-300"
-                  />
-                </th>
-                <th className="px-4 py-3 font-medium">基金代码</th>
-                <th className="px-4 py-3 font-medium">操作</th>
-                <th className="px-4 py-3 font-medium">建议金额</th>
-                <th className="px-4 py-3 font-medium">状态</th>
-                <th className="px-4 py-3 font-medium">日期</th>
-                <th className="px-4 py-3 font-medium">操作</th>
-              </tr>
-            </thead>
-            <tbody>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr className="border-b bg-gray-50 text-left text-sm text-gray-500">
+                  <th className="px-4 py-3 w-10">
+                    <input
+                      type="checkbox"
+                      checked={items.length > 0 && selectedIds.size === items.length}
+                      onChange={toggleSelectAll}
+                      className="rounded border-gray-300"
+                    />
+                  </th>
+                  <th className="px-4 py-3 font-medium">基金代码</th>
+                  <th className="px-4 py-3 font-medium">操作</th>
+                  <th className="px-4 py-3 font-medium">建议金额</th>
+                  <th className="px-4 py-3 font-medium">状态</th>
+                  <th className="px-4 py-3 font-medium">日期</th>
+                  <th className="px-4 py-3 font-medium">操作</th>
+                </tr>
+              </thead>
+              <tbody>
               {items.map(item => {
                 const act = ACTION_UI[item.action] || ACTION_UI.hold;
                 const ActIcon = act.icon;
@@ -479,6 +482,7 @@ export default function ManualFollow() {
               })}
             </tbody>
           </table>
+        </div>
         )}
       </div>
 

@@ -217,11 +217,12 @@ export default function FundDetail() {
         {holdings.length === 0 ? (
           <p className="text-gray-400 text-center py-8">暂无持仓数据</p>
         ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b text-left text-sm text-gray-500">
-                <th className="px-4 py-3 font-medium">#</th>
-                <th className="px-4 py-3 font-medium">股票代码</th>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr className="border-b text-left text-sm text-gray-500">
+                  <th className="px-4 py-3 font-medium">#</th>
+                  <th className="px-4 py-3 font-medium">股票代码</th>
                 <th className="px-4 py-3 font-medium">股票名称</th>
                 <th className="px-4 py-3 font-medium">占比(%)</th>
               </tr>
@@ -243,7 +244,7 @@ export default function FundDetail() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
         )}
       </div>
     </div>

@@ -90,8 +90,8 @@ export default function FundList() {
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-4">
+        <div className="relative w-full sm:flex-1 sm:max-w-md">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
@@ -117,10 +117,10 @@ export default function FundList() {
             </button>
           )}
         </div>
-        <div className="flex items-center gap-1 overflow-x-auto">
+        <div className="flex items-center gap-1 overflow-x-auto w-full sm:w-auto pb-1">
           <button
             onClick={() => handleTypeFilter('')}
-            className={`px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors ${!typeFilter ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+            className={`px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors shrink-0 ${!typeFilter ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
           >
             全部
           </button>
@@ -128,7 +128,7 @@ export default function FundList() {
             <button
               key={k}
               onClick={() => handleTypeFilter(k)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors ${typeFilter === k ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+              className={`px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap transition-colors shrink-0 ${typeFilter === k ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
             >
               {v}
             </button>
@@ -155,48 +155,50 @@ export default function FundList() {
             <button onClick={() => { setSearch(''); setSearchInput(''); setTypeFilter(''); setPage(0); }} className="text-sm text-primary-600 hover:underline mt-2">清除筛选</button>
           </div>
         ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b bg-gray-50 text-left text-sm text-gray-500">
-                <th className="px-4 py-3 font-medium">代码</th>
-                <th className="px-4 py-3 font-medium">名称</th>
-                <th className="px-4 py-3 font-medium">类型</th>
-                <th className="px-4 py-3 font-medium">规模</th>
-                <th className="px-4 py-3 font-medium">风险等级</th>
-                <th className="px-4 py-3 font-medium">基金公司</th>
-              </tr>
-            </thead>
-            <tbody>
-              {funds.map(f => (
-                <tr key={f.code} className="border-b last:border-0 hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => navigate(`/funds/${f.code}`)}>
-                  <td className="px-4 py-3 text-sm font-mono text-primary-600">{f.code}</td>
-                  <td className="px-4 py-3 text-sm font-medium text-gray-800 max-w-[240px] truncate">{f.name}</td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${TYPE_BADGES[f.type] || 'bg-gray-100 text-gray-600'}`}>
-                      {FUND_TYPES[f.type] || f.type}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-600">{f.fund_size ? `${(f.fund_size / 1e8).toFixed(2)}亿` : '--'}</td>
-                  <td className="px-4 py-3">
-                    {f.risk_level ? (
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${RISK_BADGES[f.risk_level] || 'bg-gray-100 text-gray-600'}`}>
-                        {RISK_LABELS[f.risk_level] || f.risk_level}
-                      </span>
-                    ) : '--'}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-gray-500 max-w-[160px] truncate">{f.company || '--'}</td>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr className="border-b bg-gray-50 text-left text-sm text-gray-500">
+                  <th className="px-4 py-3 font-medium">代码</th>
+                  <th className="px-4 py-3 font-medium">名称</th>
+                  <th className="px-4 py-3 font-medium">类型</th>
+                  <th className="px-4 py-3 font-medium">规模</th>
+                  <th className="px-4 py-3 font-medium">风险等级</th>
+                  <th className="px-4 py-3 font-medium">基金公司</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {funds.map(f => (
+                  <tr key={f.code} className="border-b last:border-0 hover:bg-gray-50 cursor-pointer transition-colors" onClick={() => navigate(`/funds/${f.code}`)}>
+                    <td className="px-4 py-3 text-sm font-mono text-primary-600">{f.code}</td>
+                    <td className="px-4 py-3 text-sm font-medium text-gray-800 max-w-[240px] truncate">{f.name}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${TYPE_BADGES[f.type] || 'bg-gray-100 text-gray-600'}`}>
+                        {FUND_TYPES[f.type] || f.type}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{f.fund_size ? `${(f.fund_size / 1e8).toFixed(2)}亿` : '--'}</td>
+                    <td className="px-4 py-3">
+                      {f.risk_level ? (
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${RISK_BADGES[f.risk_level] || 'bg-gray-100 text-gray-600'}`}>
+                          {RISK_LABELS[f.risk_level] || f.risk_level}
+                        </span>
+                      ) : '--'}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 max-w-[160px] truncate">{f.company || '--'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4">
-          <div className="flex items-center gap-3">
-            <p className="text-sm text-gray-500">显示 {(page * pageSize) + 1}-{Math.min((page + 1) * pageSize, total)} / 共 {total.toLocaleString()} 只</p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mt-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm text-gray-500">{(page * pageSize) + 1}-{Math.min((page + 1) * pageSize, total)} / 共 {total.toLocaleString()} 只</p>
             <select
               value={pageSize}
               onChange={e => { setPageSize(Number(e.target.value)); setPage(0); }}
@@ -205,7 +207,7 @@ export default function FundList() {
               {PAGE_SIZES.map(s => <option key={s} value={s}>每页 {s} 条</option>)}
             </select>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 self-end sm:self-auto">
             <button
               onClick={() => setPage(p => Math.max(0, p - 1))}
               disabled={page === 0}

@@ -20,7 +20,13 @@ app = FastAPI(title="Cumbre — 基金智投跟投平台", lifespan=lifespan, do
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "https://*.trycloudflare.com",
+        "https://*.lhr.life",
+    ],
+    allow_origin_regex="https://.*\\.trycloudflare\\.com|https://.*\\.lhr\\.life",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -165,8 +165,8 @@ export default function AutoFollow() {
           <p className="text-gray-400 text-sm mb-4">尚未设置日均投入金额。设置后系统将自动生成投资组合。</p>
         )}
         <div className="mt-4 pt-4 border-t">
-          <div className="flex flex-wrap items-end gap-3">
-            <div className="relative flex-1 max-w-xs">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-3">
+            <div className="relative w-full sm:flex-1 sm:max-w-xs">
               <DollarSign size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="number"
@@ -176,13 +176,13 @@ export default function AutoFollow() {
                 className="input-field pl-9"
               />
             </div>
-            <div>
+            <div className="w-full sm:w-auto">
               <label className="text-xs text-gray-500 block mb-1">执行频率</label>
-              <select value={planType} onChange={e => setPlanType(e.target.value)} className="input-field text-sm py-2">
+              <select value={planType} onChange={e => setPlanType(e.target.value)} className="input-field text-sm py-2 w-full sm:w-auto">
                 {PLAN_TYPES.map(pt => <option key={pt.value} value={pt.value}>{pt.label}</option>)}
               </select>
             </div>
-            <button onClick={saveConfig} disabled={saving || !dailyAmount} className="btn-primary">
+            <button onClick={saveConfig} disabled={saving || !dailyAmount} className="btn-primary w-full sm:w-auto">
               {saving ? '保存中...' : (config ? '更新设置' : '启动跟投')}
             </button>
           </div>
@@ -326,34 +326,36 @@ export default function AutoFollow() {
 
           {/* Positions */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <div className="lg:col-span-2 card">
-              <h2 className="text-lg font-semibold mb-4">持仓明细</h2>
+            <div className="lg:col-span-2 card overflow-hidden">
+              <h2 className="text-lg font-semibold mb-4 px-5 pt-5">持仓明细</h2>
               {portfolio.positions?.length === 0 ? (
                 <p className="text-gray-400 text-center py-8">暂无持仓</p>
               ) : (
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b text-left text-sm text-gray-500">
-                      <th className="px-4 py-3 font-medium">基金</th>
-                      <th className="px-4 py-3 font-medium">份额</th>
-                      <th className="px-4 py-3 font-medium">成本净值</th>
-                      <th className="px-4 py-3 font-medium">占比</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {portfolio.positions?.map((p: any) => (
-                      <tr key={p.id} className="border-b last:border-0">
-                        <td className="px-4 py-3 text-sm">
-                          <span className="font-mono text-primary-600">{p.fund_code}</span>
-                          {fundNames[p.fund_code] && <span className="text-gray-500 ml-2">{fundNames[p.fund_code]}</span>}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-700">{p.shares?.toFixed(2)}</td>
-                        <td className="px-4 py-3 text-sm text-gray-600">{p.cost_nav?.toFixed(4)}</td>
-                        <td className="px-4 py-3 text-sm font-medium">{(p.allocation_ratio * 100).toFixed(1)}%</td>
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr className="border-b text-left text-sm text-gray-500">
+                        <th className="px-4 py-3 font-medium">基金</th>
+                        <th className="px-4 py-3 font-medium">份额</th>
+                        <th className="px-4 py-3 font-medium">成本净值</th>
+                        <th className="px-4 py-3 font-medium">占比</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {portfolio.positions?.map((p: any) => (
+                        <tr key={p.id} className="border-b last:border-0">
+                          <td className="px-4 py-3 text-sm">
+                            <span className="font-mono text-primary-600">{p.fund_code}</span>
+                            {fundNames[p.fund_code] && <span className="text-gray-500 ml-2">{fundNames[p.fund_code]}</span>}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">{p.shares?.toFixed(2)}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{p.cost_nav?.toFixed(4)}</td>
+                          <td className="px-4 py-3 text-sm font-medium">{(p.allocation_ratio * 100).toFixed(1)}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
 
@@ -385,42 +387,44 @@ export default function AutoFollow() {
           </div>
 
           {/* Trades */}
-          <div className="card mb-6">
-            <h2 className="text-lg font-semibold mb-4">交易记录</h2>
+          <div className="card overflow-hidden mb-6">
+            <h2 className="text-lg font-semibold mb-4 px-5 pt-5">交易记录</h2>
             {portfolio.trades?.length === 0 ? (
               <p className="text-gray-400 text-center py-8">暂无交易</p>
             ) : (
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b text-left text-sm text-gray-500">
-                    <th className="px-4 py-3 font-medium">日期</th>
-                    <th className="px-4 py-3 font-medium">基金</th>
-                    <th className="px-4 py-3 font-medium">类型</th>
-                    <th className="px-4 py-3 font-medium">金额</th>
-                    <th className="px-4 py-3 font-medium">份额</th>
-                    <th className="px-4 py-3 font-medium">净值</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {portfolio.trades?.map((t: any) => (
-                    <tr key={t.id} className="border-b last:border-0">
-                      <td className="px-4 py-3 text-sm text-gray-500">{t.date}</td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className="font-mono text-primary-600">{t.fund_code}</span>
-                        {fundNames[t.fund_code] && <span className="text-gray-500 ml-2">{fundNames[t.fund_code]}</span>}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`text-xs px-2 py-1 rounded-full font-medium ${t.type === 'buy' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
-                          {t.type === 'buy' ? '买入' : '卖出'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-700">¥{t.amount?.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{t.shares?.toFixed(2)}</td>
-                      <td className="px-4 py-3 text-sm text-gray-500">{t.nav?.toFixed(4)}</td>
+              <div className="table-wrap">
+                <table>
+                  <thead>
+                    <tr className="border-b text-left text-sm text-gray-500">
+                      <th className="px-4 py-3 font-medium">日期</th>
+                      <th className="px-4 py-3 font-medium">基金</th>
+                      <th className="px-4 py-3 font-medium">类型</th>
+                      <th className="px-4 py-3 font-medium">金额</th>
+                      <th className="px-4 py-3 font-medium">份额</th>
+                      <th className="px-4 py-3 font-medium">净值</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {portfolio.trades?.map((t: any) => (
+                      <tr key={t.id} className="border-b last:border-0">
+                        <td className="px-4 py-3 text-sm text-gray-500 whitespace-nowrap">{t.date}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <span className="font-mono text-primary-600">{t.fund_code}</span>
+                          {fundNames[t.fund_code] && <span className="text-gray-500 ml-2">{fundNames[t.fund_code]}</span>}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs px-2 py-1 rounded-full font-medium whitespace-nowrap ${t.type === 'buy' ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
+                            {t.type === 'buy' ? '买入' : '卖出'}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">¥{t.amount?.toLocaleString()}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">{t.shares?.toFixed(2)}</td>
+                        <td className="px-4 py-3 text-sm text-gray-500">{t.nav?.toFixed(4)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
 
@@ -470,43 +474,45 @@ export default function AutoFollow() {
             </div>
 
             {/* Position Details */}
-            <table className="w-full">
-              <thead>
-                <tr className="border-b text-left text-sm text-gray-500">
-                  <th className="px-4 py-3 font-medium">基金</th>
-                  <th className="px-4 py-3 font-medium">份额</th>
-                  <th className="px-4 py-3 font-medium">成本/现价</th>
-                  <th className="px-4 py-3 font-medium">市值</th>
-                  <th className="px-4 py-3 font-medium">盈亏</th>
-                  <th className="px-4 py-3 font-medium">占比</th>
-                </tr>
-              </thead>
-              <tbody>
-                {profitDetail.positions?.map((pos: any) => (
-                  <tr key={pos.fund_code} className="border-b last:border-0">
-                    <td className="px-4 py-3 text-sm">
-                      <span className="font-mono text-primary-600">{pos.fund_code}</span>
-                      {fundNames[pos.fund_code] && <div className="text-xs text-gray-400">{fundNames[pos.fund_code]}</div>}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">{pos.shares.toFixed(2)}</td>
-                    <td className="px-4 py-3 text-sm">
-                      <div className="text-gray-600">{pos.cost_nav.toFixed(4)}</div>
-                      <div className="text-xs text-gray-400">→ {pos.current_nav.toFixed(4)}</div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-700">¥{pos.market_value.toLocaleString()}</td>
-                    <td className="px-4 py-3 text-sm">
-                      <div className={pos.profit_loss >= 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
-                        {pos.profit_loss >= 0 ? '+' : ''}¥{pos.profit_loss.toLocaleString()}
-                      </div>
-                      <div className={`text-xs ${pos.profit_loss_ratio >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                        {pos.profit_loss_ratio >= 0 ? '+' : ''}{pos.profit_loss_ratio}%
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{(pos.allocation_ratio * 100).toFixed(1)}%</td>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr className="border-b text-left text-sm text-gray-500">
+                    <th className="px-4 py-3 font-medium">基金</th>
+                    <th className="px-4 py-3 font-medium">份额</th>
+                    <th className="px-4 py-3 font-medium">成本/现价</th>
+                    <th className="px-4 py-3 font-medium">市值</th>
+                    <th className="px-4 py-3 font-medium">盈亏</th>
+                    <th className="px-4 py-3 font-medium">占比</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {profitDetail.positions?.map((pos: any) => (
+                    <tr key={pos.fund_code} className="border-b last:border-0">
+                      <td className="px-4 py-3 text-sm">
+                        <span className="font-mono text-primary-600">{pos.fund_code}</span>
+                        {fundNames[pos.fund_code] && <div className="text-xs text-gray-400">{fundNames[pos.fund_code]}</div>}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">{pos.shares.toFixed(2)}</td>
+                      <td className="px-4 py-3 text-sm">
+                        <div className="text-gray-600">{pos.cost_nav.toFixed(4)}</div>
+                        <div className="text-xs text-gray-400">→ {pos.current_nav.toFixed(4)}</div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-700 whitespace-nowrap">¥{pos.market_value.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-sm whitespace-nowrap">
+                        <div className={pos.profit_loss >= 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium'}>
+                          {pos.profit_loss >= 0 ? '+' : ''}¥{pos.profit_loss.toLocaleString()}
+                        </div>
+                        <div className={`text-xs ${pos.profit_loss_ratio >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                          {pos.profit_loss_ratio >= 0 ? '+' : ''}{pos.profit_loss_ratio}%
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-600">{(pos.allocation_ratio * 100).toFixed(1)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <div className="flex justify-end mt-4">
               <button onClick={() => setShowProfitDetail(false)} className="btn-primary">关闭</button>
             </div>

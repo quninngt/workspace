@@ -96,7 +96,8 @@ export default function ManualPortfolio() {
                       {p.positions?.length === 0 ? (
                         <p className="text-gray-400 text-sm">暂无持仓</p>
                       ) : (
-                        <table className="w-full">
+                      <div className="table-wrap">
+                        <table>
                           <thead>
                             <tr className="border-b text-left text-sm text-gray-500">
                               <th className="px-4 py-2 font-medium">基金</th>
@@ -116,7 +117,7 @@ export default function ManualPortfolio() {
                               </tr>
                             ))}
                           </tbody>
-                        </table>
+                        </table></div>
                       )}
                     </div>
 
@@ -126,6 +127,7 @@ export default function ManualPortfolio() {
                       {p.trades?.length === 0 ? (
                         <p className="text-gray-400 text-sm">暂无交易</p>
                       ) : (
+                        <div className="table-wrap">
                         <table className="w-full">
                           <thead>
                             <tr className="border-b text-left text-sm text-gray-500">
@@ -154,7 +156,7 @@ export default function ManualPortfolio() {
                               </tr>
                             ))}
                           </tbody>
-                        </table>
+                        </table></div>
                       )}
                     </div>
                   </div>

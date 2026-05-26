@@ -5,6 +5,8 @@
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
 }
 
 @layer components {
@@ -22,5 +24,19 @@ body {
   }
   .card {
     @apply bg-white rounded-xl shadow-sm border border-gray-100 p-5;
+  }
+  /* Responsive table: horizontal scroll on mobile */
+  .table-wrap {
+    @apply overflow-x-auto -mx-4 md:mx-0;
+  }
+  .table-wrap table {
+    @apply min-w-[640px] md:min-w-0 w-full;
+  }
+  /* Card-based list for mobile */
+  .mobile-card-list {
+    @apply space-y-3;
+  }
+  .mobile-card-list > div {
+    @apply block md:hidden;
   }
 }

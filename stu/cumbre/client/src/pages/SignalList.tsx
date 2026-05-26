@@ -81,18 +81,19 @@ export default function SignalList() {
             <p className="text-gray-400">暂无信号数据</p>
           </div>
         ) : (
-          <table className="w-full">
-            <thead>
-              <tr className="border-b bg-gray-50 text-left text-sm text-gray-500">
-                <th className="px-4 py-3 font-medium">基金代码</th>
-                <th className="px-4 py-3 font-medium">基金名称</th>
-                <th className="px-4 py-3 font-medium">评分</th>
-                <th className="px-4 py-3 font-medium">等级</th>
-                <th className="px-4 py-3 font-medium">建议操作</th>
-                <th className="px-4 py-3 font-medium">推荐理由</th>
-                <th className="px-4 py-3 font-medium">日期</th>
-              </tr>
-            </thead>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr className="border-b bg-gray-50 text-left text-sm text-gray-500">
+                  <th className="px-4 py-3 font-medium">基金代码</th>
+                  <th className="px-4 py-3 font-medium">基金名称</th>
+                  <th className="px-4 py-3 font-medium">评分</th>
+                  <th className="px-4 py-3 font-medium">等级</th>
+                  <th className="px-4 py-3 font-medium">建议操作</th>
+                  <th className="px-4 py-3 font-medium">推荐理由</th>
+                  <th className="px-4 py-3 font-medium">日期</th>
+                </tr>
+              </thead>
             <tbody>
               {signals.map(s => {
                 const cfg = LEVEL_CONFIG[s.level] || LEVEL_CONFIG.B;
@@ -137,7 +138,7 @@ export default function SignalList() {
                 );
               })}
             </tbody>
-          </table>
+          </table></div>
         )}
       </div>
 
