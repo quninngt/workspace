@@ -1,0 +1,9 @@
+[project]
+name = "portal"
+version = "1.0.0"
+description = "Service management portal"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+]
