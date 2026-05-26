@@ -3,7 +3,9 @@ Admin/management endpoints: manually trigger data collection and signal generati
 """
 
 import json as _json
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel
+from datetime import date
 from app.services.dependencies import get_admin_user
 from app.models.user import User
 from app.schemas.backtest import BacktestRequest
@@ -235,3 +237,60 @@ async def delete_backtest_result(
         await db.commit()
 
     return {"ok": True}
+
+
+# ─── Grid Scan ─────────────────────────────────────────────────────
+
+
+class GridScanRequest(BaseModel):
+    start_date: date
+    end_date: date
+
+
+@router.post("/backtest/grid")
+async def trigger_grid_scan(
+    request: GridScanRequest,
+    user: User = Depends(get_admin_user),
+):
+    """Run parameter grid scan — tries weight combinations and ranks results."""
+    asyncio.create_task(_run_grid_scan(request))
+    return {"message": f"Grid scan started: {request.start_date} ~ {request.end_date}"}
+
+
+async def _run_grid_scan(request):
+    from app.database import init_db, async_session
+    from app.services.backtesting.grid_scanner import run_grid_scan
+    from app.models.backtest import BacktestResult
+
+    await init_db()
+    async with async_session() as db:
+        result = await run_grid_scan(db, request.start_date, request.end_date)
+
+        # Store grid scan as a backtest result with special name prefix
+        best = result.get("best") or {}
+        improvement = result.get("improvement_vs_default") or {}
+
+        record = BacktestResult(
+            name=f"[网格] {request.start_date}~{request.end_date}",
+            start_date=request.start_date,
+            end_date=request.end_date,
+            params=_json.dumps({"grid_scan": True, "candidates": result["candidates_tried"], "successful": result["successful_runs"]}, ensure_ascii=False),
+            performance=_json.dumps(best.get("performance", {}), ensure_ascii=False),
+            summary=_json.dumps({
+                "type": "grid_scan",
+                "candidates_tried": result["candidates_tried"],
+                "successful_runs": result["successful_runs"],
+                "best_label": (best or {}).get("label", ""),
+                "improvement": improvement,
+            }, ensure_ascii=False),
+            signal_distribution=_json.dumps({}, ensure_ascii=False),
+            factor_contributions=_json.dumps({}, ensure_ascii=False),
+            monthly_returns=_json.dumps([], ensure_ascii=False),
+            daily_values=_json.dumps(result.get("ranked_results", []), ensure_ascii=False, default=str),
+        )
+        db.add(record)
+        await db.commit()
+        await db.refresh(record)
+
+    _logger = __import__("logging").getLogger(__name__)
+    _logger.info(f"Grid scan complete: {result['successful_runs']}/{result['candidates_tried']} runs, best={improvement.get('best_label', '?')}")

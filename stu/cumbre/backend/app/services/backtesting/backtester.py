@@ -36,16 +36,32 @@ async def run_backtest(
     end_date: date,
     params: BacktestParams | None = None,
 ) -> dict:
-    """Run historical backtest between start_date and end_date."""
+    """Run historical backtest between start_date and end_date (loads NAV data from DB)."""
     if params is None:
         params = BacktestParams()
 
+    nav_index, fund_sizes, idx_navs, trading_dates = await _load_backtest_data(
+        db, start_date, end_date
+    )
+
+    if not trading_dates:
+        return {"error": "No trading dates in range"}
+
+    return run_backtest_with_data(
+        start_date, end_date, params,
+        nav_index, fund_sizes, idx_navs, trading_dates,
+    )
+
+
+async def _load_backtest_data(
+    db: AsyncSession,
+    start_date: date,
+    end_date: date,
+) -> tuple[dict[str, list[tuple[date, float]]], dict[str, float | None], dict[date, float], list[date]]:
+    """Load all NAV data once and return pre-built indices."""
     lookback = start_date - timedelta(days=365)
+    logger.info(f"Loading NAV data: {lookback} ~ {end_date}")
 
-    # --- Phase 1: Batch load all data (3-4 queries total) ---
-    logger.info(f"Backtest loading NAV data: {lookback} ~ {end_date}")
-
-    # 1. All NAV data with lookback
     nav_result = await db.execute(
         select(FundNav)
         .where(FundNav.date >= lookback, FundNav.date <= end_date)
@@ -53,16 +69,13 @@ async def run_backtest(
     )
     all_navs = nav_result.scalars().all()
 
-    # Build in-memory index: fund_code -> [(date, nav), ...]
     nav_index: dict[str, list[tuple[date, float]]] = {}
     for row in all_navs:
         nav_index.setdefault(row.fund_code, []).append((row.date, row.nav))
 
-    # 2. Fund metadata (fund_size)
     fund_result = await db.execute(select(Fund.code, Fund.fund_size))
     fund_sizes: dict[str, float | None] = {r.code: r.fund_size for r in fund_result.all()}
 
-    # 3. CSI 300 index NAVs for benchmark
     idx_result = await db.execute(
         select(FundNav)
         .where(FundNav.fund_code == "000300", FundNav.date >= lookback, FundNav.date <= end_date)
@@ -70,10 +83,27 @@ async def run_backtest(
     )
     idx_navs: dict[date, float] = {r.date: r.nav for r in idx_result.scalars().all()}
 
-    # Get trading dates (dates where we have NAV data for at least some funds)
     trading_dates = sorted({row.date for row in all_navs if start_date <= row.date <= end_date})
-    if not trading_dates:
-        return {"error": "No trading dates in range"}
+
+    logger.info(
+        f"Data loaded: {len(trading_dates)} dates, {len(nav_index)} funds, "
+        f"{sum(len(v) for v in nav_index.values())} NAV records"
+    )
+
+    return nav_index, fund_sizes, idx_navs, trading_dates
+
+
+def run_backtest_with_data(
+    start_date: date,
+    end_date: date,
+    params: BacktestParams,
+    nav_index: dict[str, list[tuple[date, float]]],
+    fund_sizes: dict[str, float | None],
+    idx_navs: dict[date, float],
+    trading_dates: list[date],
+) -> dict:
+    """Run backtest using pre-loaded NAV data (no DB queries)."""
+    lookback = start_date - timedelta(days=365)
 
     # Pre-compute date index for each fund (for bisect lookups)
     fund_date_index: dict[str, list[date]] = {}

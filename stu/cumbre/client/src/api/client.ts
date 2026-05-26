@@ -118,6 +118,8 @@ export const adminApi = {
     api.get(`/admin/backtest/results/${id}`),
   deleteBacktestResult: (id: number) =>
     api.delete(`/admin/backtest/results/${id}`),
+  gridScan: (data: { start_date: string; end_date: string }) =>
+    api.post('/admin/backtest/grid', data),
 };
 
 // Watchlist
