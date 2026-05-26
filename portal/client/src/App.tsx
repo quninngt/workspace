@@ -177,7 +177,8 @@ export default function App() {
                   )}
                 </div>
 
-                {/* Actions */}
+                {/* Actions (hide for portal itself) */}
+                {s.id !== 'portal' && (
                 <div className="card-actions">
                   {s.status !== 'running' && (
                     <button
@@ -214,6 +215,7 @@ export default function App() {
                     </a>
                   )}
                 </div>
+                )}
               </div>
             ))}
           </div>
