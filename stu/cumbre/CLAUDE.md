@@ -117,6 +117,8 @@ Determines market environment based on CSI 300 (沪深300) PE/PB percentiles:
 - **neutral** (30%-70%): multiplier ×0.92 — 中性环境，轻度折扣
 - **risk_off** (PE百分位 > 70%): multiplier ×0.75 — 市场高估，大幅折扣
 
+注意：数据库中 PE/PB 百分位以百分比存储（35.0 = 35%），不是小数。
+
 **API:** `GET /api/macro-signal?date=YYYY-MM-DD`
 
 **Integration:** Signal engine applies multiplier to ALL fund scores after z-score normalization.
