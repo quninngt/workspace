@@ -148,7 +148,7 @@ export default function Dashboard() {
                 <div>
                   <p className="text-xs text-gray-500">PE百分位</p>
                   <p className="text-lg font-bold text-gray-800">
-                    {macroSignal.pe_percentile !== null ? `${(macroSignal.pe_percentile * 100).toFixed(1)}%` : '--'}
+                    {macroSignal.pe_percentile !== null ? `${macroSignal.pe_percentile.toFixed(1)}%` : '--'}
                   </p>
                 </div>
                 <div>

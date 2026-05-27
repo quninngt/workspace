@@ -17,9 +17,9 @@ from app.models.fund import IndexQuota
 
 logger = logging.getLogger(__name__)
 
-# Thresholds for PE percentile
-PE_LOW = 0.30    # Below this → risk_on
-PE_HIGH = 0.70   # Above this → risk_off
+# Thresholds for PE percentile (stored as percentage, e.g. 35.0 = 35%)
+PE_LOW = 30.0    # Below this → risk_on
+PE_HIGH = 70.0   # Above this → risk_off
 
 # Score multipliers for each macro signal
 MACRO_MULTIPLIERS = {
@@ -94,13 +94,13 @@ async def get_macro_signal(target_date: date | None = None) -> dict:
     multiplier = MACRO_MULTIPLIERS[signal]
 
     # Build reasoning
-    pe_str = f"{pe_pct:.1%}" if pe_pct is not None else "N/A"
-    pb_str = f"{pb_pct:.1%}" if pb_pct is not None else "N/A"
+    pe_str = f"{pe_pct:.1f}%" if pe_pct is not None else "N/A"
+    pb_str = f"{pb_pct:.1f}%" if pb_pct is not None else "N/A"
 
     reasoning_map = {
-        "risk_on": f"沪深300 PE百分位 {pe_str}（< {PE_LOW:.0%}），市场估值偏低，适合积极配置",
-        "neutral": f"沪深300 PE百分位 {pe_str}（{PE_LOW:.0%}-{PE_HIGH:.0%}），市场估值中性",
-        "risk_off": f"沪深300 PE百分位 {pe_str}（> {PE_HIGH:.0%}），市场估值偏高，建议防守配置",
+        "risk_on": f"沪深300 PE百分位 {pe_str}（< {PE_LOW:.0f}%），市场估值偏低，适合积极配置",
+        "neutral": f"沪深300 PE百分位 {pe_str}（{PE_LOW:.0f}%-{PE_HIGH:.0f}%），市场估值中性",
+        "risk_off": f"沪深300 PE百分位 {pe_str}（> {PE_HIGH:.0f}%），市场估值偏高，建议防守配置",
     }
 
     return {
