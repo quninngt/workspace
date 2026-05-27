@@ -123,6 +123,21 @@ Determines market environment based on CSI 300 (沪深300) PE/PB percentiles:
 
 **Integration:** Signal engine applies multiplier to ALL fund scores after z-score normalization.
 
+### Risk Metrics Module
+
+**File:** `backend/app/services/signal_engine/risk.py`
+
+Calculates risk profile for individual funds from NAV history:
+- **Annualized Volatility**: `daily_returns.std() × √252`
+- **95% VaR**: `daily_returns.quantile(0.05)` — 95% 置信度下的最大日亏损
+- **Sharpe Ratio**: `(annualized_return - risk_free_rate) / volatility`，无风险利率取 2%（1年期国债）
+- **Max Drawdown**: 最大回撤百分比 + 回撤恢复天数
+- **Risk Level**: 低风险 (< 10%)、中风险 (10-20%)、高风险 (> 20%)
+
+**API:** `GET /api/funds/{code}/risk`
+
+**Integration:** Signal engine stores risk_metrics in `factors_detail` JSON for each signal.
+
 ### Data Flow
 
 1. **Data Collection**: 天天基金 APIs → Fund/FundNav/FundHolding tables

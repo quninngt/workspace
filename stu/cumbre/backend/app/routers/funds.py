@@ -122,3 +122,36 @@ async def get_fund_signals(
         .limit(limit)
     )
     return [SignalResponse.model_validate(s) for s in result.scalars().all()]
+
+
+@router.get("/{code}/risk")
+async def get_fund_risk(
+    code: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """获取基金风险指标：波动率、VaR、夏普比率、最大回撤、风险等级。"""
+    from app.services.signal_engine.risk import calculate_risk_metrics
+    from fastapi import HTTPException
+
+    result = await db.execute(
+        select(FundNav.nav)
+        .where(FundNav.fund_code == code)
+        .order_by(FundNav.date.asc())
+    )
+    navs = [row[0] for row in result.all()]
+
+    if len(navs) < 2:
+        raise HTTPException(status_code=404, detail="基金净值数据不足，无法计算风险指标")
+
+    metrics = calculate_risk_metrics(navs)
+
+    # Get fund name
+    fund_result = await db.execute(select(Fund.name).where(Fund.code == code))
+    fund_name = fund_result.scalar_one_or_none()
+
+    return {
+        "fund_code": code,
+        "fund_name": fund_name,
+        **metrics,
+    }

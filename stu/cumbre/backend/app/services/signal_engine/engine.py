@@ -94,6 +94,10 @@ async def _compute_factors(
     )
     sentiment_result = calculate_sentiment(nav_values)
 
+    # Calculate risk metrics
+    from app.services.signal_engine.risk import calculate_risk_metrics
+    risk_result = calculate_risk_metrics(nav_values)
+
     return {
         "code": code,
         "raw_factors": {
@@ -109,6 +113,7 @@ async def _compute_factors(
             "valuation": valuation_result["details"],
             "quality": quality_result["details"],
             "sentiment": sentiment_result["details"],
+            "risk": risk_result,
         },
     }
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fundsApi, watchlistApi } from '../api/client';
-import { ArrowLeft, Star, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { ArrowLeft, Star, TrendingUp, TrendingDown, Minus, Shield, AlertTriangle } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 
 const LEVEL_COLORS: Record<string, string> = {
@@ -33,6 +33,7 @@ export default function FundDetail() {
   const [valuations, setValuations] = useState<any[]>([]);
   const [holdings, setHoldings] = useState<any[]>([]);
   const [signals, setSignals] = useState<any[]>([]);
+  const [riskMetrics, setRiskMetrics] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [holdingDate, setHoldingDate] = useState('');
   const [toast, setToast] = useState('');
@@ -48,13 +49,16 @@ export default function FundDetail() {
       safeFetch(() => fundsApi.valuations(code, 60)),
       safeFetch(() => fundsApi.holdings(code)),
       safeFetch(() => fundsApi.signals(code, 20)),
-    ]).then(([f, n, v, h, s]) => {
+      safeFetch(() => fundsApi.risk(code)),
+    ]).then(([f, n, v, h, s, r]) => {
       setFund(f.data);
       setNavData([...n.data].reverse());
       setValuations([...v.data].reverse());
       const hData = h.data;
       setHoldings(hData);
       if (hData.length > 0) setHoldingDate(hData[0].date);
+      setSignals(s.data);
+      setRiskMetrics(r.data);
     }).finally(() => setLoading(false));
   }, [code]);
 
@@ -178,6 +182,53 @@ export default function FundDetail() {
               </div>
             )}
           </div>
+
+          {/* Risk Metrics */}
+          {riskMetrics && (
+            <div className="card">
+              <div className="flex items-center gap-2 mb-4">
+                <Shield size={18} className={
+                  riskMetrics.risk_level === 'low' ? 'text-green-600' :
+                  riskMetrics.risk_level === 'high' ? 'text-red-600' : 'text-yellow-600'
+                } />
+                <h2 className="text-lg font-semibold">风险画像</h2>
+                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                  riskMetrics.risk_level === 'low' ? 'bg-green-100 text-green-700' :
+                  riskMetrics.risk_level === 'high' ? 'bg-red-100 text-red-700' :
+                  'bg-yellow-100 text-yellow-700'
+                }`}>
+                  {riskMetrics.risk_level === 'low' ? '低风险' :
+                   riskMetrics.risk_level === 'high' ? '高风险' : '中风险'}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500">年化波动率</p>
+                  <p className="text-lg font-bold text-gray-800">{(riskMetrics.volatility * 100).toFixed(1)}%</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500">95% VaR</p>
+                  <p className="text-lg font-bold text-gray-800">{(riskMetrics.var_95 * 100).toFixed(2)}%</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500">夏普比率</p>
+                  <p className="text-lg font-bold text-gray-800">{riskMetrics.sharpe_ratio ?? '--'}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs text-gray-500">最大回撤</p>
+                  <p className="text-lg font-bold text-red-600">{(riskMetrics.max_drawdown * 100).toFixed(1)}%</p>
+                  {riskMetrics.max_drawdown_days && (
+                    <p className="text-xs text-gray-400 mt-0.5">恢复 {riskMetrics.max_drawdown_days} 天</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-4 mt-3 pt-3 border-t text-xs text-gray-500">
+                <span>累计收益: <strong className={riskMetrics.total_return >= 0 ? 'text-green-600' : 'text-red-600'}>{(riskMetrics.total_return * 100).toFixed(1)}%</strong></span>
+                <span>年化收益: <strong className={riskMetrics.annualized_return >= 0 ? 'text-green-600' : 'text-red-600'}>{(riskMetrics.annualized_return * 100).toFixed(1)}%</strong></span>
+                <span>数据天数: {riskMetrics.trading_days}</span>
+              </div>
+            </div>
+          )}
 
           {/* PE/PB Valuation */}
           <div className="card">

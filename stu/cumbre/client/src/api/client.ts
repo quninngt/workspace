@@ -48,6 +48,7 @@ export const fundsApi = {
   holdings: (code: string) => api.get(`/funds/${code}/holdings`),
   valuations: (code: string, limit?: number) => api.get(`/funds/${code}/valuations`, { params: { limit } }),
   signals: (code: string, limit?: number) => api.get(`/funds/${code}/signals`, { params: { limit } }),
+  risk: (code: string) => api.get(`/funds/${code}/risk`),
   // Batch lookup fund names by codes, returns Map<code, name>
   names: async (codes: string[]): Promise<Record<string, string>> => {
     const unique = [...new Set(codes.filter(Boolean))];
