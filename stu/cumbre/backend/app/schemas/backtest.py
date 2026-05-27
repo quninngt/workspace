@@ -12,6 +12,13 @@ class BacktestParams(BaseModel):
     max_daily_buys: int = 5
     signal_thresholds: dict[str, float] | None = None
     normalize_signals: bool = False
+    
+    # Trading costs
+    subscription_fee: float = 0.0015    # 申购费 0.15%
+    redemption_fee_short: float = 0.015  # 赎回费 (持有<7天) 1.5%
+    redemption_fee_medium: float = 0.005 # 赎回费 (7-365天) 0.5%
+    redemption_fee_long: float = 0.0     # 赎回费 (>1年) 0%
+    slippage: float = 0.0005            # 滑点 0.05%
 
 
 class BacktestRequest(BaseModel):

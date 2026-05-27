@@ -235,6 +235,10 @@ def run_backtest_with_data(
             p["shares"] * p.get("current_nav", p["cost_nav"]) for p in portfolio.values()
         )
 
+        # Trading cost tracking
+        daily_buy_cost = 0.0
+        daily_sell_cost = 0.0
+
         # Sell first (frees cash)
         for code, signal, latest_nav in signals_for_date:
             if signal["action"] == "sell" and code in portfolio:
@@ -242,10 +246,26 @@ def run_backtest_with_data(
                 pos = portfolio[code]
                 sell_shares = pos["shares"] * ratio
                 sell_amount = sell_shares * latest_nav
+                
+                # Calculate redemption fee based on holding period
+                buy_date = pos.get("buy_date", dt)
+                holding_days = (dt - buy_date).days
+                if holding_days < 7:
+                    redemption_fee = params.redemption_fee_short
+                elif holding_days <= 365:
+                    redemption_fee = params.redemption_fee_medium
+                else:
+                    redemption_fee = params.redemption_fee_long
+                
+                # Apply slippage and redemption fee
+                cost = sell_amount * (params.slippage + redemption_fee)
+                net_sell_amount = sell_amount - cost
+                daily_sell_cost += cost
+                
                 pos["shares"] -= sell_shares
                 if pos["shares"] <= 0:
                     del portfolio[code]
-                cash += sell_amount
+                cash += net_sell_amount
 
         # Buy: sort by score, take top N, exclude already-held funds
         buy_signals = [
@@ -269,8 +289,14 @@ def run_backtest_with_data(
                     buy_amount = cash_per_weight * weight
                     if buy_amount <= 0 or nav <= 0:
                         continue
-                    shares = buy_amount / nav
-                    portfolio[code] = {"shares": shares, "cost_nav": nav, "current_nav": nav}
+                    
+                    # Apply subscription fee and slippage
+                    cost = buy_amount * (params.subscription_fee + params.slippage)
+                    net_buy_amount = buy_amount - cost
+                    daily_buy_cost += cost
+                    
+                    shares = net_buy_amount / nav
+                    portfolio[code] = {"shares": shares, "cost_nav": nav, "current_nav": nav, "buy_date": dt}
                     cash -= buy_amount
 
         # Update current_nav for all positions
@@ -289,6 +315,8 @@ def run_backtest_with_data(
             "cash": round(cash, 2),
             "positions": len(portfolio),
             "signals": len(signals_for_date),
+            "buy_cost": round(daily_buy_cost, 2),
+            "sell_cost": round(daily_sell_cost, 2),
         })
 
         # Daily return
@@ -335,10 +363,37 @@ def run_backtest_with_data(
     # Benchmark
     benchmark_return = _calc_benchmark_return(start_date, end_date, idx_navs)
 
+    # Excess return and information ratio
+    excess_return = total_return - benchmark_return
+    
+    # Tracking error (annualized std of excess daily returns)
+    benchmark_daily_returns = _calc_benchmark_daily_returns(start_date, trading_dates, idx_navs)
+    if daily_returns and benchmark_daily_returns and len(daily_returns) == len(benchmark_daily_returns):
+        excess_daily = [r - b for r, b in zip(daily_returns, benchmark_daily_returns)]
+        mean_excess = sum(excess_daily) / len(excess_daily)
+        tracking_error = (sum((r - mean_excess) ** 2 for r in excess_daily) / len(excess_daily)) ** 0.5 * math.sqrt(252)
+        info_ratio = (excess_return / 100) / tracking_error if tracking_error > 0 else 0
+    else:
+        tracking_error = 0
+        info_ratio = 0
+
+    # Profit/loss ratio
+    profits = [r for r in daily_returns if r > 0]
+    losses = [abs(r) for r in daily_returns if r < 0]
+    avg_profit = sum(profits) / len(profits) if profits else 0
+    avg_loss = sum(losses) / len(losses) if losses else 0
+    profit_loss_ratio = avg_profit / avg_loss if avg_loss > 0 else 0
+
+    # Total trading costs
+    total_buy_cost = sum(dv.get("buy_cost", 0) for dv in daily_values)
+    total_sell_cost = sum(dv.get("sell_cost", 0) for dv in daily_values)
+    total_trading_cost = total_buy_cost + total_sell_cost
+
     logger.info(
         f"Backtest complete: {len(trading_dates)} days, "
         f"return={total_return:.2f}%, benchmark={benchmark_return:.2f}%, "
-        f"max_dd={max_drawdown:.2f}%, sharpe={sharpe:.2f}"
+        f"excess={excess_return:.2f}%, max_dd={max_drawdown:.2f}%, sharpe={sharpe:.2f}, "
+        f"trading_cost={total_trading_cost:.2f}"
     )
 
     return {
@@ -352,11 +407,17 @@ def run_backtest_with_data(
         "performance": {
             "total_return_pct": round(total_return, 2),
             "benchmark_return_pct": round(benchmark_return, 2),
+            "excess_return_pct": round(excess_return, 2),
             "max_drawdown_pct": round(max_drawdown, 2),
             "final_value": round(end_value, 2),
             "sharpe_ratio": round(sharpe, 2),
+            "information_ratio": round(info_ratio, 2),
             "win_rate_pct": round(win_rate, 1),
+            "profit_loss_ratio": round(profit_loss_ratio, 2),
             "annualized_return_pct": round(annualized_return, 2),
+            "total_trading_cost": round(total_trading_cost, 2),
+            "buy_cost": round(total_buy_cost, 2),
+            "sell_cost": round(total_sell_cost, 2),
         },
         "signal_distribution": {k: v for k, v in sorted(signal_stats.items())},
         "factor_contributions": {
@@ -405,3 +466,28 @@ def _calc_benchmark_return(
     if start_nav == 0:
         return 0.0
     return (end_nav - start_nav) / start_nav * 100
+
+
+def _calc_benchmark_daily_returns(
+    start_date: date,
+    trading_dates: list[date],
+    idx_navs: dict[date, float],
+) -> list[float]:
+    """Calculate daily returns for CSI 300 benchmark."""
+    returns = []
+    sorted_dates = sorted(d for d in idx_navs if d >= start_date)
+    
+    for i in range(1, len(trading_dates)):
+        dt = trading_dates[i]
+        prev_dt = trading_dates[i - 1]
+        
+        # Find closest available dates in benchmark
+        curr_nav = idx_navs.get(dt)
+        prev_nav = idx_navs.get(prev_dt)
+        
+        if curr_nav and prev_nav and prev_nav > 0:
+            returns.append(curr_nav / prev_nav - 1)
+        else:
+            returns.append(0.0)
+    
+    return returns
