@@ -138,6 +138,23 @@ Calculates risk profile for individual funds from NAV history:
 
 **Integration:** Signal engine stores risk_metrics in `factors_detail` JSON for each signal.
 
+### Backtest Enhancement
+
+**File:** `backend/app/services/backtesting/backtester.py`
+
+Enhanced backtest with realistic trading costs:
+- **申购费 (Subscription Fee)**: 0.15% per buy (天天基金标准费率)
+- **赎回费 (Redemption Fee)**: 持有 < 7天 1.5%, 7-365天 0.5%, > 1年 0%
+- **滑点 (Slippage)**: 0.05% per trade
+
+Additional metrics:
+- **Excess Return**: portfolio_return - benchmark_return
+- **Information Ratio**: excess_return / tracking_error
+- **Profit/Loss Ratio**: avg_profit / avg_loss
+- **Total Trading Cost**: 申购费 + 赎回费 + 滑点
+
+**API:** `POST /api/admin/backtest` with `params.trading_cost_ratio`, `params.subscription_fee`, etc.
+
 ### Data Flow
 
 1. **Data Collection**: 天天基金 APIs → Fund/FundNav/FundHolding tables

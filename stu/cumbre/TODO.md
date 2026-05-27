@@ -149,6 +149,21 @@
 
 ---
 
+## Phase 3 — 回测增强（2026-05-27 进行中）
+
+让回测结果能回答"这个策略到底赚不赚钱"。
+
+| # | 分类 | 任务 | 状态 | 涉及文件 | 说明 |
+|---|------|------|------|----------|------|
+| 53 | 回测 | **交易成本模拟** | ⬜ | `backtesting/backtester.py` | 申购费 0.15% + 赎回费 (持有<7天 1.5%, 7-365天 0.5%, >1年 0%) + 滑点 0.05% |
+| 54 | 回测 | **超额收益 + 信息比率** | ⬜ | `backtesting/backtester.py` | excess_return = portfolio - benchmark, info_ratio = excess_return / tracking_error |
+| 55 | 回测 | **盈亏比** | ⬜ | `backtesting/backtester.py` | 平均盈利 / 平均亏损 |
+| 56 | 回测 | **前端回测报告增强** | ⬜ | `pages/Backtest.tsx` | 收益曲线 vs 基准对比图 + 交易成本显示 |
+
+**预期效果**：回测结果更真实，扣除成本后还能跑赢基准才是好策略。
+
+---
+
 ## 已完成项（历史）
 
 - ✅ 项目骨架：monorepo + FastAPI + React + SQLite
