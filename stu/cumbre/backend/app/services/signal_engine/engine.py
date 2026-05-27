@@ -1,6 +1,12 @@
 """
 Signal engine orchestrator: fetches fund data from database, runs factor scoring,
 and stores results as Signal records.
+
+Now integrates macro signal (PE/PB percentile) to adjust scores in different
+market environments:
+- risk_on:  full scores (×1.0)
+- neutral:  mild discount (×0.92)
+- risk_off: significant discount (×0.75)
 """
 
 import json
@@ -14,6 +20,7 @@ from app.models.fund import Fund, FundNav, IndexQuota
 from app.models.signal import Signal
 from app.services.signal_engine.scorer import compute_signal, FACTOR_WEIGHTS
 from app.services.signal_engine.recommendation import generate_recommendation
+from app.services.signal_engine.macro import get_macro_signal, MACRO_MULTIPLIERS
 from app.services.signal_engine.factors import (
     calculate_trend,
     calculate_momentum,
@@ -111,11 +118,24 @@ async def run_signal_engine(target_date: date | None = None):
     Run the signal engine for ALL funds that have NAV data.
     Uses two-pass normalization: first collects raw factor scores across all funds,
     then normalizes them before computing final signals.
+
+    Applies macro signal multiplier based on market PE/PB percentile:
+    - risk_on:  ×1.0 (full scores)
+    - neutral:  ×0.92 (mild discount)
+    - risk_off: ×0.75 (significant discount)
     """
     if target_date is None:
         target_date = date.today()
 
     logger.info(f"===== Running signal engine for {target_date} =====")
+
+    # Get macro signal for score adjustment
+    macro = await get_macro_signal(target_date)
+    macro_multiplier = macro["multiplier"]
+    logger.info(
+        f"Macro signal: {macro['signal']} (multiplier={macro_multiplier}), "
+        f"PE percentile={macro['pe_percentile']}, PB percentile={macro['pb_percentile']}"
+    )
 
     async with async_session() as db:
         # Use all funds with NAV data
@@ -200,12 +220,40 @@ async def run_signal_engine(target_date: date | None = None):
 
                 sig = compute_signal(normalized)
 
+                # Apply macro multiplier to final score
+                adjusted_score = sig["score"] * macro_multiplier
+                # Re-derive level from adjusted score
+                t = {"S": 80, "A": 65, "B": 40, "C": 25}
+                if adjusted_score >= t["S"]:
+                    adjusted_level = "S"
+                    adjusted_action = "strong_buy"
+                elif adjusted_score >= t["A"]:
+                    adjusted_level = "A"
+                    adjusted_action = "buy"
+                elif adjusted_score >= t["B"]:
+                    adjusted_level = "B"
+                    adjusted_action = "hold"
+                elif adjusted_score >= t["C"]:
+                    adjusted_level = "C"
+                    adjusted_action = "sell"
+                else:
+                    adjusted_level = "D"
+                    adjusted_action = "strong_sell"
+
                 factors_detail = json.dumps({
                     "factors": normalized,
                     "raw_factors": d["raw_factors"],
                     "details": d["details"],
                     "factor_stats": factor_stats,
                     "weights": FACTOR_WEIGHTS,
+                    "macro": {
+                        "signal": macro["signal"],
+                        "multiplier": macro_multiplier,
+                        "original_score": sig["score"],
+                        "adjusted_score": adjusted_score,
+                        "pe_percentile": macro["pe_percentile"],
+                        "pb_percentile": macro["pb_percentile"],
+                    },
                 }, ensure_ascii=False)
 
                 # Generate recommendation
@@ -214,9 +262,9 @@ async def run_signal_engine(target_date: date | None = None):
                     generate_recommendation(
                         fund_name=fi.get("name", d["code"]),
                         fund_type=fi.get("type"),
-                        level=sig["level"],
-                        action=sig["action"],
-                        score=sig["score"],
+                        level=adjusted_level,
+                        action=adjusted_action,
+                        score=adjusted_score,
                         factor_scores=normalized,
                         factor_details=d["details"],
                     ),
@@ -226,9 +274,9 @@ async def run_signal_engine(target_date: date | None = None):
                 record = Signal(
                     fund_code=d["code"],
                     date=target_date,
-                    score=sig["score"],
-                    level=sig["level"],
-                    action=sig["action"],
+                    score=adjusted_score,
+                    level=adjusted_level,
+                    action=adjusted_action,
                     factors_detail=factors_detail,
                     recommendation=recommendation,
                 )

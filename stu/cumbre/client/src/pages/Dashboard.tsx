@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { marketApi, executionApi, autoApi } from '../api/client';
-import { TrendingUp, TrendingDown, BarChart3, Activity, ListTodo, Briefcase, Clock, AlertCircle } from 'lucide-react';
+import { marketApi, executionApi, autoApi, macroApi } from '../api/client';
+import { TrendingUp, TrendingDown, BarChart3, Activity, ListTodo, Briefcase, Clock, AlertCircle, Shield, Sun, Cloud, CloudRain } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 const SIGNAL_COLORS: Record<string, string> = {
@@ -38,6 +38,7 @@ export default function Dashboard() {
   const [market, setMarket] = useState<any>(null);
   const [pendingCount, setPendingCount] = useState(0);
   const [autoPortfolio, setAutoPortfolio] = useState<any>(null);
+  const [macroSignal, setMacroSignal] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,10 +46,12 @@ export default function Dashboard() {
       marketApi.overview(),
       executionApi.list({ status: 'pending' }).catch(() => ({ data: [] })),
       autoApi.getPortfolio().catch(() => ({ data: null })),
-    ]).then(([m, ex, ap]) => {
+      macroApi.getSignal().catch(() => ({ data: null })),
+    ]).then(([m, ex, ap, macro]) => {
       setMarket(m.data);
       setPendingCount(ex.data?.length || 0);
       setAutoPortfolio(ap.data);
+      setMacroSignal(macro.data);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -108,6 +111,57 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Macro Environment Indicator */}
+      {macroSignal && (
+        <div className={`card border-l-4 ${
+          macroSignal.signal === 'risk_on' ? 'border-l-green-500 bg-green-50' :
+          macroSignal.signal === 'risk_off' ? 'border-l-red-500 bg-red-50' :
+          'border-l-yellow-500 bg-yellow-50'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {macroSignal.signal === 'risk_on' ? (
+                <Sun className="text-green-600" size={28} />
+              ) : macroSignal.signal === 'risk_off' ? (
+                <CloudRain className="text-red-600" size={28} />
+              ) : (
+                <Cloud className="text-yellow-600" size={28} />
+              )}
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-semibold text-gray-800">宏观环境</h3>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                    macroSignal.signal === 'risk_on' ? 'bg-green-200 text-green-800' :
+                    macroSignal.signal === 'risk_off' ? 'bg-red-200 text-red-800' :
+                    'bg-yellow-200 text-yellow-800'
+                  }`}>
+                    {macroSignal.signal === 'risk_on' ? '积极' :
+                     macroSignal.signal === 'risk_off' ? '防守' : '中性'}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">{macroSignal.reasoning}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="flex items-center gap-4">
+                <div>
+                  <p className="text-xs text-gray-500">PE百分位</p>
+                  <p className="text-lg font-bold text-gray-800">
+                    {macroSignal.pe_percentile !== null ? `${(macroSignal.pe_percentile * 100).toFixed(1)}%` : '--'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">评分折扣</p>
+                  <p className="text-lg font-bold text-gray-800">
+                    ×{macroSignal.multiplier}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Market Thermometer + Signal Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

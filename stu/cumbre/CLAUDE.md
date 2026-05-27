@@ -92,7 +92,9 @@ Cumbre — 基金智投跟投平台. China-focused fund investment platform. Mul
 ## Architecture
 
 ```            
-信号引擎 (全市场评分) → 信号池 → 执行清单 (日投/周投/月投)
+宏观信号 (PE/PB百分位) → risk_on/neutral/risk_off → 评分折扣
+                                                    ↓
+信号引擎 (全市场评分 × 宏观折扣) → 信号池 → 执行清单 (日投/周投/月投)
                                         ↓
                               ┌─────────┴─────────┐
                               ▼                   ▼
@@ -105,6 +107,19 @@ Cumbre — 基金智投跟投平台. China-focused fund investment platform. Mul
 ```
 
 **Current factor weights** (set in `scorer.py`): valuation 15%, trend 10%, momentum 30%, quality 30%, sentiment 15%. The PRD-v2.md and `scorer.py` docstring are **stale** (show old 40/25/15/10/10) — refer to the actual `FACTOR_WEIGHTS` dict in `scorer.py` for ground truth.
+
+### Macro Signal Module
+
+**File:** `backend/app/services/signal_engine/macro.py`
+
+Determines market environment based on CSI 300 (沪深300) PE/PB percentiles:
+- **risk_on** (PE百分位 < 30%): multiplier ×1.0 — 市场低估，满额评分
+- **neutral** (30%-70%): multiplier ×0.92 — 中性环境，轻度折扣
+- **risk_off** (PE百分位 > 70%): multiplier ×0.75 — 市场高估，大幅折扣
+
+**API:** `GET /api/macro-signal?date=YYYY-MM-DD`
+
+**Integration:** Signal engine applies multiplier to ALL fund scores after z-score normalization.
 
 ### Data Flow
 

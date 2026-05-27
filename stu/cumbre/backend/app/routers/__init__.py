@@ -8,6 +8,7 @@ from app.routers.watchlist import router as watchlist_router
 from app.routers.market import router as market_router
 from app.routers.admin import router as admin_router
 from app.routers.tools import router as tools_router
+from app.routers.macro import router as macro_router
 
 routers = [
     auth_router,
@@ -20,4 +21,5 @@ routers = [
     market_router,
     admin_router,
     tools_router,
+    macro_router,
 ]

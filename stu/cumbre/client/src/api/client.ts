@@ -135,3 +135,8 @@ export const toolsApi = {
   resetManual: () => api.post('/tools/reset/manual'),
   resetSignals: () => api.post('/tools/reset/signals'),
 };
+
+// Macro Signal
+export const macroApi = {
+  getSignal: (dateStr?: string) => api.get('/macro-signal', { params: dateStr ? { date: dateStr } : {} }),
+};
