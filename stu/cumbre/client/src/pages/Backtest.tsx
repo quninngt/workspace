@@ -33,10 +33,16 @@ interface GridResult {
   performance: {
     total_return_pct: number;
     benchmark_return_pct: number;
+    excess_return_pct: number;
     max_drawdown_pct: number;
     sharpe_ratio: number;
+    information_ratio: number;
+    profit_loss_ratio: number;
     win_rate_pct: number;
     annualized_return_pct: number;
+    total_trading_cost: number;
+    buy_cost: number;
+    sell_cost: number;
   };
   signal_distribution: Record<string, number>;
   factor_contributions: Record<string, number>;
@@ -572,7 +578,7 @@ function renderSingleResult(result: any, perf: any, summary: any, usedParams: an
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         <div className="card">
           <div className="flex items-center gap-3 mb-2">
             <div className="p-2 rounded-lg bg-green-50"><TrendingUp size={20} className="text-green-600" /></div>
@@ -590,6 +596,11 @@ function renderSingleResult(result: any, perf: any, summary: any, usedParams: an
           <p className={`text-2xl font-bold ${(perf?.benchmark_return_pct || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {perf?.benchmark_return_pct > 0 ? '+' : ''}{perf?.benchmark_return_pct}%
           </p>
+          {perf?.excess_return_pct != null && (
+            <p className={`text-xs mt-1 ${(perf.excess_return_pct || 0) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              超额 {perf.excess_return_pct > 0 ? '+' : ''}{perf.excess_return_pct}%
+            </p>
+          )}
         </div>
         <div className="card">
           <div className="flex items-center gap-3 mb-2">
@@ -605,6 +616,38 @@ function renderSingleResult(result: any, perf: any, summary: any, usedParams: an
           </div>
           <p className="text-2xl font-bold text-gray-800">{perf?.sharpe_ratio}</p>
           <p className="text-xs text-gray-400 mt-1">胜率 {perf?.win_rate_pct}% | 年化 {perf?.annualized_return_pct}%</p>
+        </div>
+      </div>
+
+      {/* Phase 3 新指标行 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="card bg-gray-50">
+          <p className="text-xs text-gray-400 mb-1">信息比率</p>
+          <p className="text-lg font-bold text-gray-800">{perf?.information_ratio ?? '-'}</p>
+          <p className="text-[10px] text-gray-400 mt-1">超额收益 / 跟踪误差</p>
+        </div>
+        <div className="card bg-gray-50">
+          <p className="text-xs text-gray-400 mb-1">盈亏比</p>
+          <p className={`text-lg font-bold ${(perf?.profit_loss_ratio || 0) >= 1 ? 'text-green-600' : 'text-orange-600'}`}>
+            {perf?.profit_loss_ratio ?? '-'}
+          </p>
+          <p className="text-[10px] text-gray-400 mt-1">平均盈利 / 平均亏损</p>
+        </div>
+        <div className="card bg-gray-50">
+          <p className="text-xs text-gray-400 mb-1">总交易成本</p>
+          <p className="text-lg font-bold text-gray-800">¥{(perf?.total_trading_cost || 0).toLocaleString()}</p>
+          <p className="text-[10px] text-gray-400 mt-1">
+            买 ¥{(perf?.buy_cost || 0).toLocaleString()} / 卖 ¥{(perf?.sell_cost || 0).toLocaleString()}
+          </p>
+        </div>
+        <div className="card bg-gray-50">
+          <p className="text-xs text-gray-400 mb-1">成本占比</p>
+          <p className="text-lg font-bold text-gray-800">
+            {perf?.total_trading_cost && perf?.total_return_pct
+              ? `${((perf.total_trading_cost / 1000000) * 100).toFixed(2)}%`
+              : '-'}
+          </p>
+          <p className="text-[10px] text-gray-400 mt-1">交易成本 / 初始资金</p>
         </div>
       </div>
 
@@ -842,20 +885,3 @@ function renderFactorContributionComparison(top3: any[]) {
     </div>
   );
 }
-
-// Factor labels/colors available outside component for render fns
-const FACTOR_LABELS: Record<string, string> = {
-  valuation: '估值', trend: '趋势', momentum: '动量', quality: '质量', sentiment: '情绪',
-};
-const FACTOR_COLORS: Record<string, string> = {
-  valuation: 'text-purple-600 bg-purple-50',
-  trend: 'text-blue-600 bg-blue-50',
-  momentum: 'text-green-600 bg-green-50',
-  quality: 'text-orange-600 bg-orange-50',
-  sentiment: 'text-pink-600 bg-pink-50',
-};
-const FACTOR_BAR_COLORS: Record<string, string> = {
-  valuation: 'bg-purple-500', trend: 'bg-blue-500', momentum: 'bg-green-500',
-  quality: 'bg-orange-500', sentiment: 'bg-pink-500',
-};
-const FACTOR_ORDER = ['valuation', 'trend', 'momentum', 'quality', 'sentiment'];
