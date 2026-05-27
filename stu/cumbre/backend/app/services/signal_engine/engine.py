@@ -36,6 +36,17 @@ Z_CLAMP = 3.0      # z-scores are clamped to [-Z_CLAMP, Z_CLAMP]
 Z_SCALE = 18.0     # multiplier: z * Z_SCALE maps to ~[-54, +54]
 Z_CENTER = 50.0    # center point: 50 + z * Z_SCALE → [~6, ~94]
 
+# Percentile-based signal level distribution (replaces fixed thresholds)
+# Guarantees: S ~5%, A ~15%, B ~40%, C ~25%, D ~15%
+LEVEL_PERCENTILES = {
+    "S": 0.95,   # top 5%
+    "A": 0.80,   # next 15% (80th percentile)
+    "B": 0.40,   # middle 40% (40th percentile)
+    "C": 0.15,   # next 25% (15th percentile)
+    # D: bottom 15%
+}
+LEVEL_ACTIONS = {"S": "buy", "A": "buy", "B": "hold", "C": "sell", "D": "sell"}
+
 
 async def _compute_factors(
     db: AsyncSession,
@@ -208,11 +219,11 @@ async def run_signal_engine(target_date: date | None = None):
 
         # Phase 3: Normalize, compute final signals, save
         signals_created = 0
-
         # Load fund names and types for recommendations
         fund_rows = await db.execute(select(Fund.code, Fund.name, Fund.type))
         fund_info = {r.code: {"name": r.name, "type": r.type} for r in fund_rows}
-
+        # --- 3a: Compute normalized scores for all funds ---
+        scored: list[dict] = []
         for d in all_data:
             try:
                 normalized = {}
@@ -224,75 +235,95 @@ async def run_signal_engine(target_date: date | None = None):
                     normalized[f] = Z_CENTER + z * Z_SCALE
 
                 sig = compute_signal(normalized)
-
-                # Apply macro multiplier to final score
                 adjusted_score = sig["score"] * macro_multiplier
-                # Re-derive level from adjusted score
-                t = {"S": 80, "A": 65, "B": 40, "C": 25}
-                if adjusted_score >= t["S"]:
-                    adjusted_level = "S"
-                    adjusted_action = "strong_buy"
-                elif adjusted_score >= t["A"]:
-                    adjusted_level = "A"
-                    adjusted_action = "buy"
-                elif adjusted_score >= t["B"]:
-                    adjusted_level = "B"
-                    adjusted_action = "hold"
-                elif adjusted_score >= t["C"]:
-                    adjusted_level = "C"
-                    adjusted_action = "sell"
-                else:
-                    adjusted_level = "D"
-                    adjusted_action = "strong_sell"
-
-                factors_detail = json.dumps({
-                    "factors": normalized,
+                scored.append({
+                    "code": d["code"],
+                    "normalized": normalized,
                     "raw_factors": d["raw_factors"],
                     "details": d["details"],
+                    "score": adjusted_score,
+                    "original_score": sig["score"],
+                })
+            except Exception as e:
+                logger.warning(f"  Error scoring {d['code']}: {e}")
+
+        if not scored:
+            logger.warning("No signals could be scored")
+            return
+
+        # --- 3b: Assign levels by percentile rank ---
+        scored.sort(key=lambda x: x["score"], reverse=True)
+        n = len(scored)
+
+        def _assign_level(rank: int, total: int) -> str:
+            """Assign S/A/B/C/D based on percentile rank (0=best)."""
+            pct = rank / total  # 0.0 = top, 1.0 = bottom
+            if pct < (1 - LEVEL_PERCENTILES["S"]):      # top 5%
+                return "S"
+            elif pct < (1 - LEVEL_PERCENTILES["A"]):    # next 15%
+                return "A"
+            elif pct < (1 - LEVEL_PERCENTILES["B"]):    # next 40%
+                return "B"
+            elif pct < (1 - LEVEL_PERCENTILES["C"]):    # next 25%
+                return "C"
+            else:                                         # bottom 15%
+                return "D"
+
+        level_counts = {"S": 0, "A": 0, "B": 0, "C": 0, "D": 0}
+
+        # --- 3c: Save signals with assigned levels ---
+        for rank, item in enumerate(scored):
+            try:
+                level = _assign_level(rank, n)
+                action = LEVEL_ACTIONS[level]
+                level_counts[level] += 1
+
+                factors_detail = json.dumps({
+                    "factors": item["normalized"],
+                    "raw_factors": item["raw_factors"],
+                    "details": item["details"],
                     "factor_stats": factor_stats,
                     "weights": FACTOR_WEIGHTS,
                     "macro": {
                         "signal": macro["signal"],
                         "multiplier": macro_multiplier,
-                        "original_score": sig["score"],
-                        "adjusted_score": adjusted_score,
+                        "original_score": item["original_score"],
+                        "adjusted_score": item["score"],
                         "pe_percentile": macro["pe_percentile"],
                         "pb_percentile": macro["pb_percentile"],
                     },
                 }, ensure_ascii=False)
 
-                # Generate recommendation
-                fi = fund_info.get(d["code"], {})
+                fi = fund_info.get(item["code"], {})
                 recommendation = json.dumps(
                     generate_recommendation(
-                        fund_name=fi.get("name", d["code"]),
+                        fund_name=fi.get("name", item["code"]),
                         fund_type=fi.get("type"),
-                        level=adjusted_level,
-                        action=adjusted_action,
-                        score=adjusted_score,
-                        factor_scores=normalized,
-                        factor_details=d["details"],
+                        level=level,
+                        action=action,
+                        score=item["score"],
+                        factor_scores=item["normalized"],
+                        factor_details=item["details"],
                     ),
                     ensure_ascii=False,
                 )
 
                 record = Signal(
-                    fund_code=d["code"],
+                    fund_code=item["code"],
                     date=target_date,
-                    score=adjusted_score,
-                    level=adjusted_level,
-                    action=adjusted_action,
+                    score=item["score"],
+                    level=level,
+                    action=action,
                     factors_detail=factors_detail,
                     recommendation=recommendation,
                 )
                 db.add(record)
                 signals_created += 1
-                if signals_created % 1000 == 0:
-                    logger.info(f"  Processed {signals_created}/{len(all_data)}...")
+                if signals_created % 2000 == 0:
+                    logger.info(f"  Saved {signals_created}/{n}...")
             except Exception as e:
-                logger.warning(f"  Error finalizing {d['code']}: {e}")
-
+                logger.warning(f"  Error saving signal for {item['code']}: {e}")
         await db.commit()
-        logger.info(f"Done: {signals_created} signals created for {target_date}")
+        logger.info(f"Done: {signals_created} signals for {target_date} | Distribution: {level_counts}")
 
     logger.info("===== Signal engine complete =====")
