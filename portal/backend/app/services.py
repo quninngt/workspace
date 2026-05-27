@@ -25,10 +25,10 @@ SERVICES = [
         "name": "Cumbre 基金智投",
         "description": "基金智投跟投平台 — 跟投基金经理组合、策略回测",
         "category": "金融",
-        "web_url": "https://silly-detective-over-adjustment.trycloudflare.com",
+        "web_url": "https://unable-auckland-attractions-logical.trycloudflare.com",
         "backend": {"port": 8000, "path": "/home/ubuntu/workspace/stu/cumbre/backend", "cmd": "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"},
         "frontend": {"port": 5173, "path": "/home/ubuntu/workspace/stu/cumbre/client", "cmd": "npx vite --host 0.0.0.0 --port 5173"},
-        "tunnel": "https://silly-detective-over-adjustment.trycloudflare.com",
+        "tunnel": "https://unable-auckland-attractions-logical.trycloudflare.com",
     },
     {
         "id": "portal",
