@@ -149,7 +149,7 @@ export default function AutoFollow() {
           <h2 className="text-lg font-semibold">投资配置</h2>
         </div>
         {config ? (
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div>
               <p className="text-sm text-gray-500">日均投入金额</p>
               <p className="text-2xl font-bold text-gray-800">¥{config.daily_amount?.toLocaleString() || Math.round(config.total_amount / 22).toLocaleString()}</p>
@@ -194,7 +194,7 @@ export default function AutoFollow() {
 
         {/* Execute section */}
         {config && config.daily_amount > 0 && (
-          <div className="mt-4 pt-4 border-t flex items-center justify-between">
+          <div className="mt-4 pt-4 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <Play size={16} className="text-primary-500" />
               <span className="text-sm text-gray-600">立即执行跟投</span>
@@ -238,7 +238,7 @@ export default function AutoFollow() {
       {/* Update Market Value */}
       {portfolio && (
         <div className="card mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <RefreshCw size={16} className="text-primary-500" />
               <span className="text-sm text-gray-600">市值更新</span>
@@ -455,7 +455,7 @@ export default function AutoFollow() {
             <h3 className="text-lg font-semibold mb-4">收益明细 - 各基金贡献</h3>
 
             {/* Summary */}
-            <div className="grid grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
               <div>
                 <p className="text-sm text-gray-500">总投入</p>
                 <p className="text-lg font-bold text-gray-800">¥{profitDetail.total_invested?.toLocaleString()}</p>

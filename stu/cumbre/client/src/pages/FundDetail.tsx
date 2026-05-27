@@ -87,12 +87,12 @@ export default function FundDetail() {
       )}
 
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors"><ArrowLeft size={20} className="text-gray-500" /></button>
-        <div className="flex-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-gray-800">{fund.name}</h1>
-            <span className="text-sm font-mono text-gray-400">{fund.code}</span>
+      <div className="flex items-start gap-3 mb-6">
+        <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors shrink-0"><ArrowLeft size={20} className="text-gray-500" /></button>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-800 truncate">{fund.name}</h1>
+            <span className="text-xs sm:text-sm font-mono text-gray-400 shrink-0">{fund.code}</span>
             <button onClick={addWatchlist} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors" title="加入自选">
               <Star size={18} className="text-gray-400 hover:text-yellow-500" />
             </button>
@@ -104,9 +104,9 @@ export default function FundDetail() {
             {fund.risk_level && ` · ${fund.risk_level === 'low' ? '低风险' : fund.risk_level === 'medium' ? '中风险' : '高风险'}`}
           </p>
         </div>
-        {/* Latest Signal Badge */}
+        {/* Latest Signal Badge (desktop) */}
         {signals.length > 0 && (
-          <div className={`px-4 py-2 rounded-lg border ${LEVEL_COLORS[signals[0].level] || ''}`}>
+          <div className={`hidden sm:block px-4 py-2 rounded-lg border shrink-0 ${LEVEL_COLORS[signals[0].level] || ''}`}>
             <div className="flex items-center justify-between mb-1">
               <div className="text-center">
                 <p className="text-lg font-bold">{signals[0].level}</p>
@@ -127,6 +127,27 @@ export default function FundDetail() {
                       </p>
                     </details>
                   )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Latest Signal Badge (mobile) */}
+        {signals.length > 0 && (
+          <div className={`sm:hidden w-full -mt-3 mb-3 px-4 py-2 rounded-lg border ${LEVEL_COLORS[signals[0].level] || ''}`}>
+            <div className="flex items-center gap-3">
+              <div className="text-center">
+                <p className="text-lg font-bold">{signals[0].level}</p>
+                <p className="text-xs">{ACTION_LABELS[signals[0].action] || signals[0].action}</p>
+                <p className="text-xs opacity-60">{signals[0].score.toFixed(1)}分</p>
+              </div>
+              {signals[0].recommendation?.short && (
+                <div className="flex-1 text-left min-w-0">
+                  <p className="text-xs font-medium">推荐理由</p>
+                  <p className="text-xs opacity-80 leading-tight truncate" title={signals[0].recommendation.professional}>
+                    {signals[0].recommendation.short}
+                  </p>
                 </div>
               )}
             </div>
@@ -222,7 +243,7 @@ export default function FundDetail() {
                   )}
                 </div>
               </div>
-              <div className="flex items-center gap-4 mt-3 pt-3 border-t text-xs text-gray-500">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-3 pt-3 border-t text-xs text-gray-500">
                 <span>累计收益: <strong className={riskMetrics.total_return >= 0 ? 'text-green-600' : 'text-red-600'}>{(riskMetrics.total_return * 100).toFixed(1)}%</strong></span>
                 <span>年化收益: <strong className={riskMetrics.annualized_return >= 0 ? 'text-green-600' : 'text-red-600'}>{(riskMetrics.annualized_return * 100).toFixed(1)}%</strong></span>
                 <span>数据天数: {riskMetrics.trading_days}</span>
@@ -248,7 +269,7 @@ export default function FundDetail() {
               </ResponsiveContainer>
             )}
             {/* Legend */}
-            <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 mt-3 text-xs text-gray-500">
               <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-amber-500 inline-block" /> PE百分位</span>
               <span className="flex items-center gap-1"><span className="w-3 h-0.5 bg-purple-500 inline-block" /> PB百分位</span>
               <span className="text-gray-300">|</span>

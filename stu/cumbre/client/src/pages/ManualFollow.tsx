@@ -129,12 +129,12 @@ export default function ManualFollow() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">执行清单</h1>
           <p className="text-gray-500 mt-1">查看和管理投资执行计划</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button onClick={async () => {
             setGenLoading(true);
             setGenMessage(null);
@@ -293,7 +293,7 @@ export default function ManualFollow() {
       )}
 
       {/* Status Filter + Batch Actions */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-1">
           {['', 'pending', 'executed', 'skipped'].map(s => (
             <button
@@ -488,7 +488,7 @@ export default function ManualFollow() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4">
           <p className="text-sm text-gray-500">共 {total} 项</p>
           <div className="flex items-center gap-2">
             <button

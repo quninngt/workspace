@@ -231,7 +231,7 @@ export default function Backtest() {
         <>
           {/* Controls */}
           <div className="card mb-6">
-            <div className="flex items-end gap-4 flex-wrap">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
               <div>
                 <label className="text-sm text-gray-500 block mb-1">开始日期</label>
                 <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="input-field" max={endDate} />
@@ -282,7 +282,7 @@ export default function Backtest() {
 
                 <div>
                   <label className="text-xs text-gray-500 block mb-2">因子权重（总和 = 1.0）</label>
-                  <div className="grid grid-cols-5 gap-2">
+                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                     {Object.entries(FACTOR_LABELS).map(([key, label]) => (
                       <div key={key}>
                         <label className="text-xs text-gray-400 block mb-1">{label}</label>
@@ -362,7 +362,7 @@ export default function Backtest() {
       {tab === 'grid' && (
         <>
           <div className="card mb-6">
-            <div className="flex items-end gap-4 flex-wrap">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
               <div>
                 <label className="text-sm text-gray-500 block mb-1">开始日期</label>
                 <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="input-field" max={endDate} />
@@ -401,7 +401,7 @@ export default function Backtest() {
               {gridBest && renderBestCard(gridBest)}
 
               {/* Sort controls */}
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex flex-wrap items-center gap-1 sm:gap-2 mb-3">
                 <span className="text-xs text-gray-400">排序:</span>
                 {['composite_score', 'sharpe_ratio', 'total_return_pct', 'max_drawdown_pct', 'annualized_return_pct', 'win_rate_pct'].map(k => (
                   <button key={k} onClick={() => sortedKey(k)}

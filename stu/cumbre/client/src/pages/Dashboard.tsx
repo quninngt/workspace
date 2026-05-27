@@ -119,7 +119,7 @@ export default function Dashboard() {
           macroSignal.signal === 'risk_off' ? 'border-l-red-500 bg-red-50' :
           'border-l-yellow-500 bg-yellow-50'
         }`}>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start gap-3">
             <div className="flex items-center gap-3">
               {macroSignal.signal === 'risk_on' ? (
                 <Sun className="text-green-600" size={28} />
@@ -200,7 +200,7 @@ export default function Dashboard() {
           {pieData.length === 0 ? (
             <p className="text-gray-400 text-center py-8">暂无信号数据</p>
           ) : (
-            <div className="flex items-center gap-6">
+            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
               <ResponsiveContainer width={180} height={180}>
                 <PieChart>
                   <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={40} outerRadius={80}>
