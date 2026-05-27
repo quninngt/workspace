@@ -35,10 +35,10 @@ SERVICES = [
         "name": "服务管理门户",
         "description": "统一管理所有服务的控制面板",
         "category": "系统",
-        "web_url": "https://mystery-beans-mumbai-included.trycloudflare.com",
+        "web_url": "https://waves-newport-ought-ecology.trycloudflare.com",
         "backend": {"port": 8002, "path": "/home/ubuntu/workspace/portal/backend", "cmd": "uvicorn app.main:app --host 0.0.0.0 --port 8002 --reload"},
         "frontend": {"port": 5175, "path": "/home/ubuntu/workspace/portal/client", "cmd": "npx vite --host 0.0.0.0 --port 5175"},
-        "tunnel": "https://mystery-beans-mumbai-included.trycloudflare.com",
+        "tunnel": "https://waves-newport-ought-ecology.trycloudflare.com",
     },
 ]
 
