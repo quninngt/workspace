@@ -120,9 +120,9 @@ def start_backend(service: dict) -> bool:
     
     if venv:
         activate = os.path.join(venv, "bin", "activate")
-        shell_cmd = f"cd {path} && source {activate} && nohup {cmd} > /tmp/{service['id']}_backend.log 2>&1 &"
+        shell_cmd = f"setsid bash -c 'cd {path} && source {activate} && exec {cmd}' > /tmp/{service['id']}_backend.log 2>&1 &"
     else:
-        shell_cmd = f"cd {path} && nohup {cmd} > /tmp/{service['id']}_backend.log 2>&1 &"
+        shell_cmd = f"setsid bash -c 'cd {path} && exec {cmd}' > /tmp/{service['id']}_backend.log 2>&1 &"
     
     try:
         subprocess.Popen(["bash", "-c", shell_cmd], preexec_fn=os.setpgrp)
@@ -135,7 +135,7 @@ def start_frontend(service: dict) -> bool:
     """Start the frontend process."""
     path = service["frontend"]["path"]
     cmd = service["frontend"]["cmd"]
-    shell_cmd = f"cd {path} && nohup {cmd} > /tmp/{service['id']}_frontend.log 2>&1 &"
+    shell_cmd = f"setsid bash -c 'cd {path} && exec {cmd}' > /tmp/{service['id']}_frontend.log 2>&1 &"
     try:
         subprocess.Popen(["bash", "-c", shell_cmd], preexec_fn=os.setpgrp)
         return True
